@@ -36,5 +36,18 @@ namespace CalDavServer.Services
             _db.Calendars.Remove(calendar);
             _db.SaveChanges();
         }
+        public IEnumerable<AclEntry> GetAcl(Guid calendarId) => _db.AclEntries.Where(a => a.CalendarId == calendarId).ToList();
+        public void AddAcl(AclEntry entry)
+        {
+            _db.AclEntries.Add(entry);
+            _db.SaveChanges();
+        }
+        public void RemoveAcl(Guid aclId)
+        {
+            var entry = _db.AclEntries.Find(aclId);
+            if (entry == null) return;
+            _db.AclEntries.Remove(entry);
+            _db.SaveChanges();
+        }
     }
 }

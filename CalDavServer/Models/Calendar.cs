@@ -10,5 +10,6 @@ namespace CalDavServer.Models
         public Guid OwnerId { get; set; }
         public User Owner { get; set; }
         public ICollection<Event> Events { get; set; }
+        public ICollection<AclEntry> AclEntries { get; set; } // ACL записи
     }
 }
