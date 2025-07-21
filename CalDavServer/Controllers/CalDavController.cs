@@ -34,6 +34,37 @@ namespace CalDavServer.Controllers
             return Content(xml, "application/xml");
         }
 
+        // REPORT (calendar-query, calendar-multiget, free-busy)
+        [AcceptVerbs("REPORT")]
+        [Route("calendar/{id}/report")]
+        public IActionResult Report(Guid id)
+        {
+            // Пример stub-ответа для calendar-query
+            var calendar = _calendarService.Get(id);
+            if (calendar == null) return NotFound();
+            // Здесь можно добавить парсинг XML-запроса и формирование ответа
+            var ics = IcsHelper.GenerateIcs(calendar.Events);
+            return Content(ics, "text/calendar");
+        }
+
+        // PROPPATCH (изменение свойств ресурсов)
+        [AcceptVerbs("PROPPATCH")]
+        [Route("calendar/{id}")]
+        public IActionResult PropPatch(Guid id, [FromBody] string xml)
+        {
+            // Здесь можно реализовать обработку изменения свойств календаря
+            // Пока просто возвращаем 200 OK
+            return Ok();
+        }
+
+        // OPTIONS (отдача поддерживаемых методов)
+        [HttpOptions("")]
+        public IActionResult Options()
+        {
+            Response.Headers.Add("Allow", "OPTIONS, PROPFIND, REPORT, PROPPATCH, PUT, DELETE, MKCALENDAR, GET, POST");
+            return Ok();
+        }
+
         [HttpPut("calendar/{id}/event/{eventId}")]
         public IActionResult PutEvent(Guid id, Guid eventId, [FromBody] Event ev)
         {

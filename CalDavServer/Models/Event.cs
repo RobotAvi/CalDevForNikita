@@ -12,5 +12,11 @@ namespace CalDavServer.Models
         public DateTime End { get; set; }
         public string Summary { get; set; }
         public string Description { get; set; }
+        public string RRule { get; set; } // Recurrence Rule
+        public string ExDate { get; set; } // Исключённые даты
+        public string RDate { get; set; } // Дополнительные даты
+        public string Location { get; set; } // Место
+        public string Status { get; set; } // Статус
+        public string Categories { get; set; } // Категории
     }
 }

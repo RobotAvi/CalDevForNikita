@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Basic;
+using Microsoft.AspNetCore.Authentication.Basic.Events;
 
 namespace CalDavServer
 {
@@ -21,6 +24,12 @@ namespace CalDavServer
             // TODO: Add authentication, EF Core, and other services
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+
+            // Basic Authentication
+            services.AddScoped<AuthService>();
+            services.AddScoped<IBasicUserValidationService, BasicUserValidationService>();
+            services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme)
+                .AddBasic<BasicUserValidationService>(options => { });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
