@@ -37,14 +37,38 @@ namespace CalDavServer.Controllers
         // REPORT (calendar-query, calendar-multiget, free-busy)
         [AcceptVerbs("REPORT")]
         [Route("calendar/{id}/report")]
-        public IActionResult Report(Guid id)
+        public IActionResult Report(Guid id, [FromBody] string xml = null)
         {
-            // Пример stub-ответа для calendar-query
             var calendar = _calendarService.Get(id);
             if (calendar == null) return NotFound();
-            // Здесь можно добавить парсинг XML-запроса и формирование ответа
-            var ics = IcsHelper.GenerateIcs(calendar.Events);
-            return Content(ics, "text/calendar");
+            if (string.IsNullOrEmpty(xml))
+            {
+                // Старое поведение: вернуть все события
+                var ics = IcsHelper.GenerateIcs(calendar.Events);
+                return Content(ics, "text/calendar");
+            }
+            // Примитивный парсинг типа запроса
+            if (xml.Contains("free-busy"))
+            {
+                // Вернуть free-busy отчет (stub)
+                var busy = calendar.Events.Select(e => $"BEGIN:VFREEBUSY\nFREEBUSY:{e.Start:yyyyMMddTHHmmssZ}/{e.End:yyyyMMddTHHmmssZ}\nEND:VFREEBUSY");
+                var ics = $"BEGIN:VCALENDAR\n{string.Join("\n", busy)}\nEND:VCALENDAR";
+                return Content(ics, "text/calendar");
+            }
+            if (xml.Contains("calendar-multiget"))
+            {
+                // Вернуть все события (stub)
+                var ics = IcsHelper.GenerateIcs(calendar.Events);
+                return Content(ics, "text/calendar");
+            }
+            if (xml.Contains("calendar-query"))
+            {
+                // Вернуть все события (stub, без фильтрации)
+                var ics = IcsHelper.GenerateIcs(calendar.Events);
+                return Content(ics, "text/calendar");
+            }
+            // По умолчанию вернуть все события
+            return Content(IcsHelper.GenerateIcs(calendar.Events), "text/calendar");
         }
 
         // PROPPATCH (изменение свойств ресурсов)
@@ -52,8 +76,47 @@ namespace CalDavServer.Controllers
         [Route("calendar/{id}")]
         public IActionResult PropPatch(Guid id, [FromBody] string xml)
         {
-            // Здесь можно реализовать обработку изменения свойств календаря
-            // Пока просто возвращаем 200 OK
+            // Примитивная обработка изменения displayname
+            if (!string.IsNullOrEmpty(xml) && xml.Contains("displayname"))
+            {
+                var start = xml.IndexOf("<displayname>") + 13;
+                var end = xml.IndexOf("</displayname>");
+                if (start > 0 && end > start)
+                {
+                    var name = xml.Substring(start, end - start);
+                    var cal = _calendarService.Get(id);
+                    if (cal != null)
+                    {
+                        cal.Name = name;
+                        _calendarService.Update(id, cal);
+                    }
+                }
+            }
+            return Ok();
+        }
+
+        // ACL (базовая обработка)
+        [AcceptVerbs("ACL")]
+        [Route("calendar/{id}/acl")]
+        public IActionResult Acl(Guid id, [FromBody] string xml)
+        {
+            // Примитивный парсинг: если xml содержит <add>, добавляем право, если <get>, возвращаем список
+            if (!string.IsNullOrEmpty(xml) && xml.Contains("<add>"))
+            {
+                // stub: userId и role из xml (в реальности нужен парсинг XML)
+                var userId = Guid.NewGuid(); // заменить на парсинг
+                var role = "read";
+                var entry = new Models.AclEntry { Id = Guid.NewGuid(), CalendarId = id, UserId = userId, Role = role };
+                _calendarService.AddAcl(entry);
+                return Ok();
+            }
+            if (!string.IsNullOrEmpty(xml) && xml.Contains("<get>"))
+            {
+                var acl = _calendarService.GetAcl(id);
+                // stub: возвращаем список в виде строки
+                var result = string.Join(",", acl.Select(a => $"{a.UserId}:{a.Role}"));
+                return Content(result);
+            }
             return Ok();
         }
 
