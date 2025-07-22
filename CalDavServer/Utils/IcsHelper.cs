@@ -12,7 +12,9 @@ namespace CalDavServer.Utils
         {
             var sb = new StringBuilder();
             sb.AppendLine("BEGIN:VCALENDAR");
+            sb.AppendLine("PRODID:-//CalDavServer//EN"); // RFC5545-required
             sb.AppendLine("VERSION:2.0");
+            // Только VEVENT, но структура расширяема
             foreach (var ev in events)
             {
                 sb.AppendLine("BEGIN:VEVENT");
